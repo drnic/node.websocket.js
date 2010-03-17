@@ -28,7 +28,7 @@ By default, it'll listen on localhost port 8080. node.websocket.js interprets th
   
 On the client side, initialize a `WebSocket` like this:
 
-	new WebSocket(ws://localhost:8080/test);
+	new WebSocket("ws://localhost:8080/test");
 
 `websocket::Connection` will try to load a [module](http://nodejs.org/api.html#_modules) in the modules/ directory with the name of the passed resource (in this case `test`).
 
