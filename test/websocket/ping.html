@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Ping</title>
+    
+    <style type="text/css" media="screen">
+      #time { background: #ccc; }
+    </style>
+    <!-- Include these three JS files: -->
+    <script type="text/javascript" src="javascripts/swfobject.js"></script>
+    <script type="text/javascript" src="javascripts/FABridge.js"></script>
+    <script type="text/javascript" src="javascripts/web_socket.js"></script>
+    <script type="text/javascript" src="javascripts/jquery.js"></script>
+    
+  </head>
+  <body>
+    
+    <h1>Ping</h1>
+    
+    <label for="host">Host</label>
+    <input type="text"   id="host" value="google.com">
+    <input type="submit" id="ping" value="Ping!">
+    <input type="submit" id="clear-log" value="Clear log">
+    <span id="stop-pid-buttons"></span>
+    
+    <div id="ping-log"><pre /></div>
+    
+    <script>
+      $(function() {
+        $('#ping').click(function(event) {
+          webSocket.send("start " + $('#host').val());
+          return false;
+        });
+        
+        $('#clear-log').click(function(event) {
+          $('#ping-log').html('');
+          return false;
+        });
+        
+        $('.stop-pid').live('click', function(event) {
+          $(this).hide();
+          webSocket.send("stop " + $(this).data('pid'));
+        });
+        
+        $.createStopPidButton = function(data) {
+          var pidInfo = data.match(new RegExp("start (.+)$"))
+          console.debug(pidInfo);
+          if (pidInfo) {
+            eval("pidInfo = " + pidInfo[1]);
+            pid = pidInfo.pid;
+            console.debug(pid);
+            if (typeof pid != "undefined" && pid != null && $('#stop-pid-' + pid).size() == 0) {
+              $('<input type="submit">').
+                attr('id', '"stop-pid-' + pid).
+                addClass("stop-pid").
+                val("Stop " + pidInfo.host).
+                data("pid", pid).
+                appendTo($('#stop-pid-buttons'));
+              return true;
+            }
+          }
+          return false;
+        };
+
+        // Set URL of your WebSocketMain.swf here:
+        WebSocket.__swfLocation = "flash/WebSocketMain.swf";
+
+        var webSocket = new WebSocket('ws://localhost:8082/ping');
+
+        webSocket.onopen = function(event){
+          $('#ping-log pre').html('waiting for socket...');
+          $('#ping').click();
+        };
+
+        webSocket.onmessage = function(event){
+          var currentLog = $('#ping-log pre').text();
+          if (!$.createStopPidButton(event.data)) {
+            $('#ping-log pre').text(event.data + "\n" + currentLog);
+          }
+        };
+
+        webSocket.onclose = function(event){
+          $('#ping-log').html('<pre>socket closed</pre>');
+        };
+
+      });
+      
+    </script>
+    
+  </body>
+</html>
